@@ -14,10 +14,10 @@ const userSchema = new Schema({
         type: String,
         required: true
     },
-    blocked: {
-        type: Boolean,
-    },
-    blocked_at: {
+    // blocked: {
+    //     type: Boolean,
+    // },
+    blocked_until: {
         type: Date,
     },
     timestamp: {

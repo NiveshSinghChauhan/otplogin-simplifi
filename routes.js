@@ -4,7 +4,7 @@ const { generateOTP, verifyOTP, generateToken } = require('./utils');
 const { log } = require('./logger');
 const otpModel = require('./models/otp');
 const dayjs = require('dayjs');
-const { addUserToBlockedQueue } = require('./queue/block-user');
+// const { addUserToBlockedQueue } = require('./queue/block-user');
 const { object, string } = require('yup')
 
 const router = require('express').Router();
@@ -82,7 +82,7 @@ router.post('/login', async (req, res) => {
         if (!user) {
             res.status(400).json({ code: 'INVLD_USR', message: 'Invalid User, User doesn\'t exist' });
             return;
-        } else if (user._doc.blocked) {
+        } else if (user._doc.blocked_until && dayjs().isBefore(user._doc.blocked_until)) {
             res.status(403).json({ code: 'USR_BLCKD', message: 'Account is blocked! Not allowed to login.' });
             return;
         }
@@ -104,11 +104,11 @@ router.post('/login', async (req, res) => {
                     const blockedAt = Date.now();
 
                     await Promise.all([
-                        user.updateOne({ $set: { blocked: true, blocked_at: blockedAt } }).exec(),
-                        otpTrack.remove()
+                        user.updateOne({ $set: { blocked_until: dayjs(blockedAt).add(5, 'm').toDate() } }).exec(),
+                        otpModel.deleteMany({ user_id: otpTrack.user_id }).exec()
                     ]);
 
-                    addUserToBlockedQueue(user.id, blockedAt);
+                    // addUserToBlockedQueue(user.id, blockedAt);
 
                     errorMsg += 'Your account is blocked for 1 hr.'
                 } else {

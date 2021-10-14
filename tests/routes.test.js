@@ -123,14 +123,13 @@ describe('Routes', () => {
             expect(response.body).toHaveProperty('code', "INVLD_OTP");
             expect(response.body).toHaveProperty('message', "Invalid OTP, Your account is blocked for 1 hr.");
 
-            await otpModel.updateOne({ _id: mockOTP.data._id }, { $set: { attempts: 0 } }).exec();
-
+            // await otpModel.updateOne({ _id: mockOTP.data._id }, { $set: { attempts: 0 } }).exec();
         });
 
 
         test('with blocked user', async function () {
             await userModel.updateOne({ _id: mockUser._id }, {
-                $set: { blocked: true, blocked_at: Date.now() }
+                $set: { blocked_until: dayjs().add(5, 'minute').toDate() }
             });
 
             const response = await request(app).post('/login').send({
@@ -142,7 +141,7 @@ describe('Routes', () => {
             expect(response.body).toHaveProperty('code', "USR_BLCKD");
 
             await userModel.updateOne({ _id: mockUser._id }, {
-                $set: { blocked: false }, $unset: { blocked_at: 1 }
+                $set: { blocked_until: dayjs().subtract(1, 'minute').toDate() }
             });
         });
 
